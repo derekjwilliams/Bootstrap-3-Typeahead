@@ -138,8 +138,28 @@
       var newLeft = right ? 'auto' : pos.left;
       // it seems like setting the css is a bad idea (just let Bootstrap do it), but I'll keep the old
       // logic in place except for the dropup/right-align cases.
-      element.css({ top: newTop, left: newLeft }).show();
-
+      if (this.maxColumns != null && maxColumns > 1) {
+        var columnCount = Math.round(this.$menu.find('li').length /40) + 1
+        if (columnCount > this.maxColumns) {
+          columnCount = this.maxColumns
+        }
+        element.css({ top: newTop, left: newLeft, "column-count": columnCount}).show();
+        var maxWidth = 0;
+        var li;
+        var children = element.find('li a span')
+        if (children.length == 0) {
+          children = element.find('li a')
+        }
+        children.each(function() { //This is to address a Chrome ul resizing issue that occurs when the number of columns is reduced from 2 to 1, should be removed if a better approach can be found
+          if ($(this).width() > maxWidth) {
+            maxWidth = $(this).width();
+          }   
+        });
+        element.css("width", (maxWidth * columnCount) + "px");
+      }
+      else {
+        element.css({ top: newTop, left: newLeft }).show();
+      }
       if (this.options.fitToElement === true) {
           element.css("width", this.$element.outerWidth() + "px");
       }
@@ -326,7 +346,42 @@
       this.$menu.html(items);
       return this;
     },
-
+    scrollToView : function (parent, element) {
+      parent = $(parent)
+      element = $(element)
+      if (element != null && element.length > 0) {
+        if (!element.is(":visible")) { //TODO remove these if not needed
+            element.css({"visibility":"hidden"}).show();
+            element.css({"visibility":"", "display":""});
+        }
+        var offset_y = element.offset().top + parent.scrollTop();
+        var height = element.innerHeight();
+        var offset_end_y = offset_y + height;
+        var visible_area_start_y = parent.scrollTop() + parent.offset().top;
+        var visible_area_end_y = visible_area_start_y + parent.outerHeight();
+        if (offset_y - height < visible_area_start_y) {
+            parent.animate({scrollTop: parent.scrollTop() + offset_end_y - visible_area_start_y - height - (parent.outerHeight(true) -  parent.innerHeight())}, 20);
+            return false;
+        } else if (offset_end_y > visible_area_end_y) {
+            parent.animate({scrollTop: parent.scrollTop()+ offset_end_y - visible_area_end_y + (parent.outerHeight(true) -  parent.innerHeight())}, 20);
+            return false;
+        }
+  // now check for left and right
+        var offset_x = element.offset().left + parent.scrollLeft();
+        var width = element.innerWidth();
+        var offset_end_x = offset_x + width;
+        var visible_area_start_x = parent.scrollLeft() + parent.offset().left;
+        var visible_area_end_x = visible_area_start_x + parent.outerWidth();
+        if (offset_x < visible_area_start_x) {
+            parent.animate({scrollLeft: parent.scrollLeft() + offset_end_x - visible_area_start_x - width - (parent.outerWidth(true) -  parent.innerWidth())}, 20);
+            return false;
+        } else if ((offset_end_x - visible_area_end_x) > -10) {
+          parent.animate({scrollLeft: parent.scrollLeft()+ offset_end_x - visible_area_end_x + (parent.outerWidth(true) -  parent.innerWidth())}, 20);
+          return false;
+        }
+      }
+      return true;
+    },
     displayText: function (item) {
       return typeof item !== 'undefined' && typeof item.name != 'undefined' ? item.name : item;
     },

@@ -216,4 +216,8 @@ $("input").tagsinput({
 });
 ```
 
+## Multiple Column Support
+
+In cases of where typeahead is used as a dropdown replacement with very large number of items, the option maxColumns can be set.  If absent then there is no change in behavior.
+
 See also: https://github.com/bassjobsen/Bootstrap-3-Typeahead/issues/40
